@@ -3,97 +3,119 @@
 * Constructor
 *
 */
-function Preferences (name, defaults, options, callback) {
+(function () {
 
-	// support alternate signature Preferences (name, options, callback)
-	if (typeof options === 'function') {
-		callback = options;
-		options = {};
+	function Preferences (name, defaults, options, callback) {
+
+		// support alternate signature Preferences (name, options, callback)
+		if (typeof options === 'function') {
+			callback = options;
+			options = {};
+		}
+
+		options = options || {};
+		defaults = defaults || {};
+
+		// setup the default options
+		options.prefix = '';
+
+		this.name = name;
+		this.defaults = defaults;
+		this.options = options;
+		this.initCallback = callback;
+		this.storage = window.localStorage;
+
+		// setup the prefix
+		this.prefix = this.determinePrefix(name, options);
+
+		// set the defaults on the database and load the rest
+		this.preferences = this.loadPreferences();
+
+		if (callback !== undefined && typeof callback === 'function') callback(null, this.preferences);
+
 	}
 
-	// setup the default options
-	options.prefix = '';
+	Preferences.prototype.determinePrefix = function (name, options) {
 
-	this.name = name;
-	this.defaults = defaults;
-	this.options = options;
-	this.initCallback = callback;
-	this.storage = window.localStorage;
+		return name + '-' + ((options.prefix && options.prefix.length) ? options.prefix + '-' : '');
 
-	// setup the prefix
-	this.prefix = this.determinePrefix(name, options);
+	};
 
-	// set the defaults on the database and load the rest
-	this.preferences = this.loadPreferences();
+	Preferences.prototype.prefixedKey = function (key) {
 
-	callback(null, this.preferences);
+		return this.prefix + key;
 
-}
+	};
 
-Preferences.prototype.determinePrefix = function (name, options) {
+	Preferences.prototype.loadPreferences = function () {
 
-	return name + '-' + ((options.prefix && options.prefix.length) ? options.prefix + '' : '');
+		var preferences = {},
+		key;
 
-};
+		// loop through anything that is currently within storage and load it in
+		for (key in this.storage) {
 
-Preferences.prototype.prefixedKey = function (key) {
+			var regex = new RegExp('(?:' + this.prefix + ')(.+)$'),
+				match = key.match(regex);
 
-	return this.prefix + '-' + key;
-
-};
-
-Preferences.prototype.loadPreferences = function () {
-
-	var preferences = {};
-
-	for (key in this.defaults) {
-		preferences[key] = this.set(key, this.get(key) || this.defaults[key]);
-	}
-
-	return preferences;
-
-};
-
-Preferences.prototype.set = function (key, value) {
-
-	if (this.get(key) !== value) {
-		this.store(key, value);
-	}
-
-	// define property
-	if (Object.defineProperty && !this[key]) {
-
-		Object.defineProperty(this, key, {
-			enumerable: true,
-			set: function (newValue) {
-				this.store(key, newValue);
-			},
-			get: function () {
-				return this.get(key);
+			if (match) {
+				key = match[1];
+				preferences[key] = this.set(key, this.get(key));
 			}
-		});
+		}
 
-	}
+		// now loop through the defaults and assign anything that was missed via storage
+		for (key in this.defaults) {
+			preferences[key] = this.set(key, this.get(key) || this.defaults[key]);
+		}
 
-	return this.get(key);
+		return preferences;
 
-};
+	};
 
-Preferences.prototype.get = function (key) {
-	return this.storage[this.prefixedKey(key)];
-};
+	Preferences.prototype.set = function (key, value) {
 
-Preferences.prototype.getObject = function () {
-	return this.preferences = this.loadPreferences();
-};
+		if (this.get(key) !== value) {
+			this.store(key, value);
+		}
 
-Preferences.prototype.store = function (key, value) {
+		// define property
+		if (Object.defineProperty && !this[key]) {
 
-	this.storage[this.prefixedKey(key)] = value;
+			Object.defineProperty(this, key, {
+				enumerable: true,
+				set: function (newValue) {
+					this.store(key, newValue);
+				},
+				get: function () {
+					return this.get(key);
+				}
+			});
 
-	return this;
+		}
+
+		return this.get(key);
+
+	};
+
+	Preferences.prototype.get = function (key) {
+		return this.storage[this.prefixedKey(key)];
+	};
+
+	Preferences.prototype.getObject = function () {
+		return this.preferences = this.loadPreferences();
+	};
+
+	Preferences.prototype.store = function (key, value) {
+
+		this.storage[this.prefixedKey(key)] = value;
+		// this.emit('store', key, value)
+
+		return this;
 
 
-};
+	};
 
-window.Preferences = Preferences;
+	window.PreferencesJS = Preferences;
+
+})();
