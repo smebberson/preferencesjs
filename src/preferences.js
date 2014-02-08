@@ -79,8 +79,8 @@
 			this.store(key, value);
 		}
 
-		// define property
-		if (Object.defineProperty && !this[key]) {
+		// define property, only once
+		if (Object.defineProperty && this[key] === undefined) {
 
 			Object.defineProperty(this, key, {
 				enumerable: true,
