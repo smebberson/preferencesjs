@@ -75,6 +75,11 @@
 
 	Preferences.prototype.set = function (key, value) {
 
+		/* manage complex data types */
+		if (typeof value === 'object') {
+			value = JSON.stringify(value);
+		}
+
 		if (this.get(key) !== value) {
 			this.store(key, value);
 		}
@@ -85,7 +90,7 @@
 			Object.defineProperty(this, key, {
 				enumerable: true,
 				set: function (newValue) {
-					this.store(key, newValue);
+					this.set(key, newValue);
 				},
 				get: function () {
 					return this.get(key);
@@ -104,6 +109,12 @@
 
 		if (typeof value === 'string' && (value === 'true' || value === 'false')) {
 			value = value === 'true';
+		} else if (typeof value === 'string') {
+			try {
+				value = JSON.parse(value);
+			} catch (e) {
+				// no-op
+			}
 		}
 
 		return value;

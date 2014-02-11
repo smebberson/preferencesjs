@@ -6,7 +6,8 @@ describe("Preferences", function() {
 		preferences = new PreferencesJS('PreferencesTestSuite', {
 			instantiated: true,
 			completed: false,
-			string: 'string'
+			string: 'string',
+			obj: { prop: 'value' }
 		});
 	});
 
@@ -16,8 +17,12 @@ describe("Preferences", function() {
 
 	describe("should store multiple data types", function () {
 
-		it("strings", function () {
-			expect(typeof preferences.string).toBeTruthy();
+		it("including strings", function () {
+			expect(typeof preferences.string === 'string').toBeTruthy();
+		});
+
+		it("including objects", function () {
+			expect(typeof preferences.obj === 'object').toBeTruthy();
 		});
 
 		describe("with boolean", function () {
