@@ -99,7 +99,15 @@
 	};
 
 	Preferences.prototype.get = function (key) {
-		return this.storage[this.prefixedKey(key)];
+
+		var value = this.storage[this.prefixedKey(key)];
+
+		if (typeof value === 'string' && (value === 'true' || value === 'false')) {
+			value = value === 'true';
+		}
+
+		return value;
+
 	};
 
 	Preferences.prototype.getObject = function () {
